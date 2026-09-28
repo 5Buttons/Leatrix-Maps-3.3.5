@@ -205,6 +205,61 @@
 			table.insert(UISpecialFrames, "WorldMapFrame")
 		end
 
+		-- WorldMapBlobFrame is a QuestPOIFrame, which is natively protected.
+		-- Detach the blob just before lockdown starts (PLAYER_REGEN_DISABLED
+		-- still allows it) and reattach it afterwards (same approach as Mapster).
+		-- While detached, calls that would be blocked are recorded instead.
+		if WorldMapBlobFrame then
+			local blob = WorldMapBlobFrame
+			local blobDetached, blobShown, blobParent, blobScale, blobPoints
+			local function noop() end
+			local blobEvent = CreateFrame("Frame")
+			blobEvent:RegisterEvent("PLAYER_REGEN_DISABLED")
+			blobEvent:RegisterEvent("PLAYER_REGEN_ENABLED")
+			blobEvent:SetScript("OnEvent", function(self, event)
+				if event == "PLAYER_REGEN_DISABLED" and not blobDetached then
+					blobDetached = true
+					blobShown  = blob:IsShown()
+					blobParent = blob:GetParent()
+					blobScale  = blob:GetScale()
+					blobPoints = {}
+					for i = 1, blob:GetNumPoints() do
+						blobPoints[i] = {blob:GetPoint(i)}
+					end
+					blob:Hide()
+					blob:SetParent(UIParent)
+					blob:ClearAllPoints()
+					-- Dummy position off screen so blob calculations still work
+					blob:SetPoint("TOP", UIParent, "BOTTOM")
+					blob.Show = function() blobShown = true end
+					blob.Hide = function() blobShown = false end
+					blob.SetParent = function(_, parent) blobParent = parent end
+					blob.SetScale = function(_, scale) blobScale = scale end
+					blob.ClearAllPoints = noop
+					blob.SetPoint = noop
+					blob.SetAllPoints = noop
+				elseif event == "PLAYER_REGEN_ENABLED" and blobDetached then
+					blobDetached = nil
+					blob.Show, blob.Hide, blob.SetParent, blob.SetScale = nil, nil, nil, nil
+					blob.ClearAllPoints, blob.SetPoint, blob.SetAllPoints = nil, nil, nil
+					blob:SetParent(blobParent)
+					blob:SetScale(blobScale)
+					blob:ClearAllPoints()
+					for i = 1, #blobPoints do
+						blob:SetPoint(unpack(blobPoints[i]))
+					end
+					blob.xRatio = nil -- force hit recalculations
+					if blobShown then
+						blob:Show()
+						if WORLDMAP_SETTINGS and WORLDMAP_SETTINGS.selectedQuest then
+							blob:DrawQuestBlob(WORLDMAP_SETTINGS.selectedQuestId, false)
+							blob:DrawQuestBlob(WORLDMAP_SETTINGS.selectedQuestId, true)
+						end
+					end
+				end
+			end)
+		end
+
 		-- Hide Track Quest checkbox (it's not needed)
 		if WorldMapTrackQuest then
 			WorldMapTrackQuest:ClearAllPoints()
@@ -1633,6 +1688,16 @@
 		do
 			local mapLeft, mapTop, mapNormalScale, mapEffectiveScale, moveDistance = 0, 0, 1, 1, 0
 
+		
+			local function SaveMapScale()
+				local scale = WorldMapFrame:GetScale()
+				LeaMapsDB["MapScale"] = scale
+				WorldMapScreenAnchor.preferredMinimodeScale = scale
+				if WorldMapFrame:IsShown() and WorldMapFrame_UpdateQuests() > 0 then
+					LeaMapsZoom.RedrawSelectedQuest()
+				end
+			end
+
 			local function GetScaleDist()
 				local x, y = GetCursorPosition()
 				x = x / mapEffectiveScale - mapLeft
@@ -1684,7 +1749,7 @@
 			scaleMouse:SetScript("OnMouseUp", function(frame)
 				frame:SetScript("OnUpdate", nil)
 				frame:SetAllPoints(scaleHandle)
-				LeaMapsDB["MapScale"] = WorldMapFrame:GetScale()
+				SaveMapScale()
 				LeaMapsLC["MapPosA"], void, LeaMapsLC["MapPosR"], LeaMapsLC["MapPosX"], LeaMapsLC["MapPosY"] = WorldMapFrame:GetPoint()
 			end)
 
@@ -1701,9 +1766,17 @@
 			WorldMapFrame:HookScript("OnShow", UpdateScaleHandle)
 			UpdateScaleHandle()
 
+			-- Ctrl+mouse wheel scaling in the zoom module changes the frame scale too
+			WorldMapScrollFrame:HookScript("OnMouseWheel", function()
+				if IsControlKeyDown() and WORLDMAP_SETTINGS.size == WORLDMAP_WINDOWED_SIZE then
+					SaveMapScale()
+				end
+			end)
+
 			-- Restore scale from previous session
 			if LeaMapsDB["MapScale"] then
 				WorldMapFrame:SetScale(LeaMapsDB["MapScale"])
+				WorldMapScreenAnchor.preferredMinimodeScale = LeaMapsDB["MapScale"]
 			end
 		end
 
