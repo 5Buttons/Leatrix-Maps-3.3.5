@@ -13,7 +13,7 @@
 	_G.LeaMapsLC = LeaMapsLC  -- expose for Reveal.lua and other modules
 
 	-- Version
-	LeaMapsLC["AddonVer"] = "3.0.188-335"
+	LeaMapsLC["AddonVer"] = "3.0.189-335"
 
 	-- Get locale table
 	local void, Leatrix_Maps = ...
@@ -411,18 +411,17 @@
 				return t, s
 			end
 
-			-- Build tables for each continent
-			local mapEasternTable, mapEasternString = BuildContinentTable(1, L["Eastern Kingdoms"], 1415)
-			local mapKalimdorTable, mapKalimdorString = BuildContinentTable(2, L["Kalimdor"], 1414)
+			local mapKalimdorTable, mapKalimdorString = BuildContinentTable(1, L["Kalimdor"], 1414)
+			local mapEasternTable, mapEasternString = BuildContinentTable(2, L["Eastern Kingdoms"], 1415)
 			local mapOutlandTable, mapOutlandString = BuildContinentTable(3, L["Outland"], 1945)
 			local mapNorthrendTable, mapNorthrendString = BuildContinentTable(4, L["Northrend"], 113)
 
 			-- Continent dropdown
 			local mapContinentTable, mapContinentString = {}, {}
 			tinsert(mapContinentString, L["Eastern Kingdoms"])
-			tinsert(mapContinentTable, {zonename = L["Eastern Kingdoms"], continent = 1, zoneindex = 0})
+			tinsert(mapContinentTable, {zonename = L["Eastern Kingdoms"], continent = 2, zoneindex = 0})
 			tinsert(mapContinentString, L["Kalimdor"])
-			tinsert(mapContinentTable, {zonename = L["Kalimdor"], continent = 2, zoneindex = 0})
+			tinsert(mapContinentTable, {zonename = L["Kalimdor"], continent = 1, zoneindex = 0})
 			tinsert(mapContinentString, L["Outland"])
 			tinsert(mapContinentTable, {zonename = L["Outland"], continent = 3, zoneindex = 0})
 			tinsert(mapContinentString, L["Northrend"])
@@ -547,11 +546,13 @@
 					return false
 				end
 
-				if curCont == 1 then
+				-- curCont is the API index (2 = Eastern Kingdoms, 1 = Kalimdor);
+				-- ZoneMapContinentMenu is the menu position (1 = Eastern Kingdoms)
+				if curCont == 2 then
 					matchCont(mapEasternTable, "ZoneMapEasternMenu", 1)
 					ekdd:Show()
 					LeaMapsLC["ZoneMapContinentMenu"] = 1; cond:Show()
-				elseif curCont == 2 then
+				elseif curCont == 1 then
 					matchCont(mapKalimdorTable, "ZoneMapKalimdorMenu", 2)
 					kmdd:Show()
 					LeaMapsLC["ZoneMapContinentMenu"] = 2; cond:Show()
@@ -1049,8 +1050,12 @@
 			if WorldMapTitleButton_OnDragStop then WorldMapTitleButton_OnDragStop() end
 		end)
 
-		-- ElvUI: restore mouse (ElvUI noops EnableMouse) and hide its backdrop
+		-- ElvUI: restore mouse (ElvUI noops EnableMouse) and hide its backdrop.
+		-- Removing the instance field un-shadows the real widget method.
 		if LeaMapsLC.ElvUI then
+			if rawget(WorldMapFrame, "EnableMouse") then
+				WorldMapFrame.EnableMouse = nil
+			end
 			hooksecurefunc(WorldMapFrame, "Show", function()
 				if not WorldMapFrame:IsMouseEnabled() then
 					WorldMapFrame:EnableMouse(true)
@@ -1688,7 +1693,6 @@
 		do
 			local mapLeft, mapTop, mapNormalScale, mapEffectiveScale, moveDistance = 0, 0, 1, 1, 0
 
-		
 			local function SaveMapScale()
 				local scale = WorldMapFrame:GetScale()
 				LeaMapsDB["MapScale"] = scale
@@ -2464,6 +2468,130 @@
 	-- L30: Events
 	----------------------------------------------------------------------
 
+	-- Check for Addon conflicts.
+	-- Ask to disable conflicting addons like ElvUIs world map or DragonUis world map
+	local mapConflicts = {
+		{
+			name = "ElvUI",
+			IsActive = function()
+				local E = LeaMapsLC.ElvUI
+				if not E or not E.private then return false end
+				local skins = E.private.skins and E.private.skins.blizzard
+				local general = E.global and E.global.general
+				return (E.private.worldmap and E.private.worldmap.enable)
+					or (skins and skins.enable and skins.worldmap)
+					or (general and general.fadeMapWhenMoving)
+			end,
+			DisableMap = function()
+				local E = LeaMapsLC.ElvUI
+				E.private.worldmap.enable = false
+				E.private.skins.blizzard.worldmap = false
+				E.global.general.fadeMapWhenMoving = false
+			end,
+		},
+		{
+			name = "DragonUI",
+			IsActive = function()
+				local D = _G.DragonUI
+				return D and D.IsModuleEnabled and D:IsModuleEnabled("worldmap") and true or false
+			end,
+			DisableMap = function()
+				local modules = _G.DragonUI.db.profile.modules
+				modules.worldmap = modules.worldmap or {}
+				modules.worldmap.enabled = false
+			end,
+		},
+		{
+			-- Leatrix zoom module is a modified port of Magnify
+			-- no choice offered, just ask to disable it
+			name = "Magnify",
+			popup = "LEATRIX_MAPS_MAGNIFY_CONFLICT",
+			IsActive = function()
+				return IsAddOnLoaded("Magnify-WotLK")
+			end,
+			DisableMap = function()
+				DisableAddOn("Magnify-WotLK")
+			end,
+		},
+	}
+
+	StaticPopupDialogs["LEATRIX_MAPS_MAP_CONFLICT"] = {
+		text = L["%s's world map is enabled. It conflicts with Leatrix Maps.|n|nPlease choose which addon do you want to use for the world map:"],
+		button2 = "Leatrix Maps",
+		OnAccept = function()
+			DisableAddOn("Leatrix_Maps")
+			ReloadUI()
+		end,
+		OnCancel = function(self, conflict, reason)
+			-- Ignore hides that were not a button click
+			if reason ~= "clicked" then return end
+			conflict.DisableMap()
+			ReloadUI()
+		end,
+		timeout = 0,
+		whileDead = 1,
+		hideOnEscape = false,
+	}
+
+	StaticPopupDialogs["LEATRIX_MAPS_MAGNIFY_CONFLICT"] = {
+		text = L["Magnify is enabled. It conflicts with Leatrix Maps' own map zoom.|n|nPlease disable Magnify."],
+		button1 = L["Disable Magnify"],
+		OnAccept = function(self, conflict)
+			conflict.DisableMap()
+			ReloadUI()
+		end,
+		timeout = 0,
+		whileDead = 1,
+		hideOnEscape = false,
+	}
+
+	-- WoW Dungeon Maps (WDM): Has basically the same POI as Leatrix Maps. 
+	-- Disable them. Only keep the microdungeons
+	local wdmOverlaps = {
+		"show_taxinode", "show_taxinode_opposite",
+		"show_taxinode_continent", "show_taxinode_continent_opposite",
+		"show_instance", "show_zonelevel", "show_minimap",
+	}
+
+	local function DisableWDMOverlaps()
+		if not IsAddOnLoaded("WDM") then return end
+		local AceAddon = LibStub("AceAddon-3.0", true)
+		local WDM = AceAddon and AceAddon:GetAddon("WDM", true)
+		if not WDM or not WDM.db then return end
+		local profile, changed = WDM.db.profile, false
+		for _, key in ipairs(wdmOverlaps) do
+			if profile[key] then
+				profile[key] = false
+				changed = true
+			end
+		end
+		-- Its tracking menu button only toggles the options above
+		if WDM_WorldMapButton then
+			WDM_WorldMapButton:Hide()
+			WDM_WorldMapButton.Show = function() end
+		end
+		if changed then
+			-- Same refresh WDM's own menu uses; the minimap restyle needs a reload
+			if WorldMapFrame:IsShown() then WorldMapFrame_Update() end
+			LeaMapsLC:Print(L["WoW Dungeon Maps features that Leatrix Maps already provides have been disabled (dungeon interior maps are kept)."])
+		end
+	end
+
+	-- Show one conflict at a time; the next one comes up after the reload
+	local function CheckMapConflicts()
+		for _, conflict in ipairs(mapConflicts) do
+			if conflict.IsActive() then
+				if conflict.popup then
+					StaticPopup_Show(conflict.popup, nil, nil, conflict)
+				else
+					StaticPopupDialogs["LEATRIX_MAPS_MAP_CONFLICT"].button1 = conflict.name
+					StaticPopup_Show("LEATRIX_MAPS_MAP_CONFLICT", conflict.name, nil, conflict)
+				end
+				return
+			end
+		end
+	end
+
 	local eFrame = CreateFrame("FRAME")
 	LeaMapsLC.EventFrame = eFrame
 	eFrame:RegisterEvent("ADDON_LOADED")
@@ -2525,6 +2653,9 @@
 		elseif event == "PLAYER_ENTERING_WORLD" then
 			LeaMapsLC:MainFunc()
 			eFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
+			-- ElvUI's E.private (and DragonUI's db) are ready from PLAYER_LOGIN on
+			CheckMapConflicts()
+			DisableWDMOverlaps()
 
 		elseif event == "PLAYER_LOGOUT" and not LeaMapsLC["NoSaveSettings"] then
 			-- Mechanics

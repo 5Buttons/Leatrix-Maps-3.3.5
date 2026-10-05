@@ -3,16 +3,17 @@
 ## Title: Leatrix Maps
 ## Notes: Enhancements for your maps.
 
-## Version: 3.0.188
-## Author: Leatrix, 5Buttons, Ravelo
+## Version: 3.0.189
+## Author: Leatrix
 ## SavedVariables: LeaMapsDB MagnifyOptions
 
 ## OptionalDeps: Leatrix_enUS, ElvUI, Demodal, Carbonite
 
 ## X-Curse-Project-ID: 463868
 
-Leatrix_Maps_Library.lua
 libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\AceTimer-3.0\AceTimer-3.0.lua
 libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Leatrix_Maps_Locale.lua
