@@ -2,7 +2,7 @@
 # Leatrix Maps (WoW 3.3.5a)
 
 A feature-rich world map enhancement addon for World of Warcraft 3.3.5a,
-backported from Leatrix Maps for WOTLK Classic
+backported from Leatrix Maps for The Burning Crusade Classic Anniversary
 
 <img width="1920" height="1080" alt="WoWScrnShot_101926_000759" src="https://github.com/user-attachments/assets/498b720a-915c-4ff2-b5ad-ea54549206f7" />
 
