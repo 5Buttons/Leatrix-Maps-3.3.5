@@ -1,15 +1,14 @@
+
 # Leatrix Maps (WoW 3.3.5a)
 
 A feature-rich world map enhancement addon for World of Warcraft 3.3.5a,
 backported from Leatrix Maps for WOTLK Classic
 
+<img width="1920" height="1080" alt="WoWScrnShot_101926_000759" src="https://github.com/user-attachments/assets/498b720a-915c-4ff2-b5ad-ea54549206f7" />
 
 
-As a disclaimer this addon was heavily vibecoded, but so far the result is better than expected and I wanted to share it. Feel free to report any issues.
 
 ---
-<img width="1920" height="1080" alt="WoWScrnShot_080726_175743" src="https://github.com/user-attachments/assets/5865044c-3554-4bca-9b29-3fdab8c50f5d" />
-
 
 
 ## Features
@@ -70,3 +69,4 @@ As a disclaimer this addon was heavily vibecoded, but so far the result is bette
 - **Leatrix** — original addon author
 - Zoom adapted from [Magnify-WotLK](https://github.com/rissole/Magnify-WotLK)
 - Map reveal adapted from Mapster 3.3.5: https://www.curseforge.com/wow/addons/mapster/files/436697
+- claude OPUS 5.5.
