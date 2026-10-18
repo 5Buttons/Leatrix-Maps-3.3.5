@@ -978,14 +978,14 @@
 			local cFrame = CreateFrame("FRAME", nil, WorldMapScrollFrame)
 			cFrame:SetPoint("BOTTOMLEFT",  WorldMapScrollFrame, "BOTTOMLEFT",  0, 0)
 			cFrame:SetPoint("BOTTOMRIGHT", WorldMapScrollFrame, "BOTTOMRIGHT", 0, 0)
-			-- Same insets as Leatrix Maps BCA; +2 for the 3.3.5a font baseline
+			-- BCA insets, +2 for the 3.3.5a font
 			cFrame:SetHeight(17)
 			cFrame.t = cFrame:CreateTexture(nil, "BACKGROUND")
 			cFrame.t:SetAllPoints()
 			cFrame.t:SetTexture("Interface\\ChatFrame\\ChatFrameBackground")
 			cFrame.t:SetVertexColor(0, 0, 0, 0.5)
 			if not customMap then
-				-- Sit in Blizzard's footer below the map, unscaled like the rest of the frame
+				-- In Blizzard's footer below the map
 				cFrame.t:Hide()
 				cFrame:SetParent(WorldMapFrame)
 				cFrame:ClearAllPoints()
@@ -1076,7 +1076,6 @@
 			local fl, fr, ft, fb = WorldMapFrame:GetLeft(), WorldMapFrame:GetRight(), WorldMapFrame:GetTop(), WorldMapFrame:GetBottom()
 			local sl, sr, st, sb = WorldMapScrollFrame:GetLeft(), WorldMapScrollFrame:GetRight(), WorldMapScrollFrame:GetTop(), WorldMapScrollFrame:GetBottom()
 			if not fl or not sl then return end
-			-- Convert scroll frame edges (its own scale) into map frame units
 			local k = WorldMapScrollFrame:GetEffectiveScale() / WorldMapFrame:GetEffectiveScale()
 			local m, mb = 0, 0
 			if LeaMapsLC["UnlockMapFrame"] == "On" then m, mb = 25, 5 end
@@ -1127,7 +1126,6 @@
 		-- Set map opacity
 		----------------------------------------------------------------------
 
-		-- Lock options that only work on the custom map
 		if not customMap then
 			LeaLockList["SetMapOpacity"] = true
 			LeaMapsLC:LockItem(LeaMapsCB["SetMapOpacity"], true)
@@ -1144,17 +1142,15 @@
 
 		if LeaMapsLC["SetMapOpacity"] == "On" and not LeaLockList["SetMapOpacity"] then
 
-			-- Create configuraton panel
 			local alphaFrame = LeaMapsLC:CreatePanel("Set map opacity", "alphaFrame")
 
-			-- Add controls
 			LeaMapsLC:MakeTx(alphaFrame, "Settings", 16, -72)
 			LeaMapsLC:MakeWD(alphaFrame, "Set map opacity while stationary and while moving.", 16, -92)
 			LeaMapsLC:MakeSL(alphaFrame, "stationaryOpacity", "Stationary", "Drag to set the map opacity for when your character is stationary.", 0.1, 1, 0.1, 36, -142, "%.1f")
 			LeaMapsLC:MakeSL(alphaFrame, "movingOpacity", "Moving", "Drag to set the map opacity for when your character is moving.", 0.1, 1, 0.1, 206, -142, "%.1f")
 			LeaMapsLC:MakeCB(alphaFrame, "NoFadeCursor", "Use stationary opacity while pointing at map", 16, -182, false, "If checked, pointing at the map while your character is moving will cause the stationary opacity setting to be applied.")
 
-			-- 3.3.5a has no PlayerMovementFrameFader, so poll movement and fade on state changes
+			-- 3.3.5a has no PlayerMovementFrameFader
 			local moving
 			local function UpdateFade()
 				if not WorldMapFrame:IsShown() then moving = nil return end
@@ -1170,7 +1166,6 @@
 			end
 			LibStub("AceTimer-3.0"):ScheduleRepeatingTimer(UpdateFade, 0.2)
 
-			-- Function to set map opacity
 			local function SetMapOpacity()
 				LeaMapsCB["stationaryOpacity"].f:SetFormattedText("%.0f%%", LeaMapsLC["stationaryOpacity"] * 100)
 				LeaMapsCB["movingOpacity"].f:SetFormattedText("%.0f%%", LeaMapsLC["movingOpacity"] * 100)
@@ -1178,19 +1173,16 @@
 				UpdateFade()
 			end
 
-			-- Set map opacity when options are changed and on startup
 			LeaMapsCB["stationaryOpacity"]:HookScript("OnValueChanged", SetMapOpacity)
 			LeaMapsCB["movingOpacity"]:HookScript("OnValueChanged", SetMapOpacity)
 			WorldMapFrame:HookScript("OnShow", SetMapOpacity)
 			SetMapOpacity()
 
-			-- Back to Main Menu button click
 			alphaFrame.b:HookScript("OnClick", function()
 				alphaFrame:Hide()
 				LeaMapsLC["PageF"]:Show()
 			end)
 
-			-- Reset button click
 			alphaFrame.r:HookScript("OnClick", function()
 				LeaMapsLC["stationaryOpacity"] = 1.0
 				LeaMapsLC["movingOpacity"] = 0.5
@@ -1199,10 +1191,8 @@
 				alphaFrame:Hide(); alphaFrame:Show()
 			end)
 
-			-- Show configuration panel when configuration button is clicked
 			LeaMapsCB["SetMapOpacityBtn"]:HookScript("OnClick", function()
 				if IsShiftKeyDown() and IsControlKeyDown() then
-					-- Preset profile
 					LeaMapsLC["stationaryOpacity"] = 1.0
 					LeaMapsLC["movingOpacity"] = 0.5
 					LeaMapsLC["NoFadeCursor"] = "On"
@@ -1222,7 +1212,6 @@
 
 		if LeaMapsLC["HideTownCityIcons"] == "On" then
 			hooksecurefunc("WorldMapFrame_Update", function()
-				-- World and continent maps (no zone selected)
 				if GetCurrentMapZone() == 0 then
 					for i = 1, GetNumMapLandmarks() do
 						local void, void, textureIndex = GetMapLandmarkInfo(i)
@@ -1241,42 +1230,34 @@
 
 		if LeaMapsLC["EnlargePlayerArrow"] == "On" then
 
-			-- Create panel
 			local arrowFrame = LeaMapsLC:CreatePanel("Enlarge player arrow", "arrowFrame")
 
-			-- Add controls
 			LeaMapsLC:MakeTx(arrowFrame, "Settings", 16, -72)
 			LeaMapsLC:MakeWD(arrowFrame, "Set the player arrow size.", 16, -92)
 			LeaMapsLC:MakeSL(arrowFrame, "PlayerArrowSize", "Player Arrow", "Drag to set the player arrow size.", 16, 64, 1, 36, -142, "%.0f")
 
-			-- Function to set player arrow size (the zoom module draws the arrow every frame)
 			local function SetArrowSize()
-				LeaMapsCB["PlayerArrowSize"].f:SetText(LeaMapsLC["PlayerArrowSize"] .. " (" .. string.format("%.0f%%", LeaMapsLC["PlayerArrowSize"] / 36 * 100) .. ")")
+				LeaMapsCB["PlayerArrowSize"].f:SetText(LeaMapsLC["PlayerArrowSize"] .. " (" .. string.format("%.0f%%", LeaMapsLC["PlayerArrowSize"] / 16 * 100) .. ")")
 				LeaMapsZoom.PLAYER_ARROW_SIZE = LeaMapsLC["PlayerArrowSize"]
 			end
 
-			-- Set arrow size when slider is changed and on startup
 			LeaMapsCB["PlayerArrowSize"]:HookScript("OnValueChanged", SetArrowSize)
 			SetArrowSize()
 
-			-- Back to Main Menu button click
 			arrowFrame.b:HookScript("OnClick", function()
 				arrowFrame:Hide()
 				LeaMapsLC["PageF"]:Show()
 			end)
 
-			-- Reset button click
 			arrowFrame.r:HookScript("OnClick", function()
-				LeaMapsLC["PlayerArrowSize"] = 36
+				LeaMapsLC["PlayerArrowSize"] = 27
 				SetArrowSize()
 				arrowFrame:Hide(); arrowFrame:Show()
 			end)
 
-			-- Show configuration panel when configuration button is clicked
 			LeaMapsCB["EnlargePlayerArrowBtn"]:HookScript("OnClick", function()
 				if IsShiftKeyDown() and IsControlKeyDown() then
-					-- Preset profile
-					LeaMapsLC["PlayerArrowSize"] = 36
+					LeaMapsLC["PlayerArrowSize"] = 27
 					SetArrowSize()
 					if arrowFrame:IsShown() then arrowFrame:Hide(); arrowFrame:Show(); end
 				else
@@ -1295,49 +1276,40 @@
 
 		if LeaMapsLC["UseClassIcons"] == "On" then
 
-			-- Create configuraton panel
 			local classFrame = LeaMapsLC:CreatePanel("Class colored icons", "classFrame")
 
-			-- Add controls
 			LeaMapsLC:MakeTx(classFrame, "Settings", 16, -72)
 			LeaMapsLC:MakeWD(classFrame, "Set the group icon size.", 16, -92)
 			LeaMapsLC:MakeSL(classFrame, "ClassIconSize", "Group Icons", "Drag to set the group icon size.", 20, 80, 1, 36, -142, "%.0f")
 
-			-- Add preview texture
 			local prevIcon = classFrame:CreateTexture(nil, "ARTWORK")
 			prevIcon:SetPoint("CENTER", classFrame, "TOPLEFT", 240, -152)
 			prevIcon:SetTexture("Interface\\AddOns\\Leatrix_Maps\\Leatrix_Maps_Icon")
 			prevIcon:SetSize(30, 30)
 			prevIcon:SetVertexColor(0.78, 0.61, 0.43, 1)
 
-			-- Function to set class icon size
 			local function SetIconSize()
 				LeaMapsCB["ClassIconSize"].f:SetText(LeaMapsLC["ClassIconSize"] .. " (" .. string.format("%.0f%%", LeaMapsLC["ClassIconSize"] / 20 * 100) .. ")")
 				LeaMapsZoom.SetGroupIconSize(LeaMapsLC["ClassIconSize"])
 				prevIcon:SetSize(LeaMapsLC["ClassIconSize"], LeaMapsLC["ClassIconSize"])
 			end
 
-			-- Set group icon size when options are changed and on startup
 			LeaMapsCB["ClassIconSize"]:HookScript("OnValueChanged", SetIconSize)
 			SetIconSize()
 
-			-- Back to Main Menu button click
 			classFrame.b:HookScript("OnClick", function()
 				classFrame:Hide()
 				LeaMapsLC["PageF"]:Show()
 			end)
 
-			-- Reset button click
 			classFrame.r:HookScript("OnClick", function()
 				LeaMapsLC["ClassIconSize"] = 20
 				SetIconSize()
 				classFrame:Hide(); classFrame:Show()
 			end)
 
-			-- Show configuration panel when configuration button is clicked
 			LeaMapsCB["UseClassIconsBtn"]:HookScript("OnClick", function()
 				if IsShiftKeyDown() and IsControlKeyDown() then
-					-- Preset profile
 					LeaMapsLC["ClassIconSize"] = 27
 					SetIconSize()
 					if classFrame:IsShown() then classFrame:Hide(); classFrame:Show(); end
@@ -1355,17 +1327,14 @@
 
 		do
 
-			-- Create configuration panel
 			local IncreaseZoomFrame = LeaMapsLC:CreatePanel("Increase zoom level", "IncreaseZoomFrame")
 
-			-- Add controls
 			LeaMapsLC:MakeTx(IncreaseZoomFrame, "Settings", 16, -72)
 			LeaMapsLC:MakeWD(IncreaseZoomFrame, "Set the maximum zoom scale.", 16, -92)
 			LeaMapsLC:MakeSL(IncreaseZoomFrame, "IncreaseZoomMax", "Maximum", "Drag to set the maximum zoom level.|n|nOpen the map to see the maximum zoom level change as you drag the slider.", 1, 6, 0.1, 36, -142, "%.1f")
-			-- 3.3.5a only: zoom speed from the original port
+			-- 3.3.5a only: zoom speed
 			LeaMapsLC:MakeSL(IncreaseZoomFrame, "ZoomStep", "Zoom speed", "Drag to set how far each mouse wheel step zooms.", LeaMapsZoom.ZOOMSTEP_SLIDER_MIN, LeaMapsZoom.ZOOMSTEP_SLIDER_MAX, LeaMapsZoom.ZOOMSTEP_SLIDER_STEP, 206, -142, "%.2f")
 
-			-- Feed the options into the zoom module
 			local function SetZoomFunc()
 				LeaMapsCB["IncreaseZoomMax"].f:SetFormattedText("%.0f%%", LeaMapsLC["IncreaseZoomMax"] * 100)
 				LeaMapsCB["ZoomStep"].f:SetFormattedText("%.2f", LeaMapsLC["ZoomStep"])
@@ -1374,20 +1343,17 @@
 				MagnifyOptions.zoomStep = LeaMapsLC["ZoomStep"]
 			end
 
-			-- Set zoom when options are changed and on startup
 			LeaMapsCB["IncreaseZoomMax"]:HookScript("OnValueChanged", SetZoomFunc)
 			LeaMapsCB["ZoomStep"]:HookScript("OnValueChanged", SetZoomFunc)
 			LeaMapsCB["IncreaseZoom"]:HookScript("OnClick", SetZoomFunc)
 			LeaMapsCB["RememberZoom"]:HookScript("OnClick", SetZoomFunc)
 			SetZoomFunc()
 
-			-- Back to Main Menu button click
 			IncreaseZoomFrame.b:HookScript("OnClick", function()
 				IncreaseZoomFrame:Hide()
 				LeaMapsLC["PageF"]:Show()
 			end)
 
-			-- Reset button click
 			IncreaseZoomFrame.r:HookScript("OnClick", function()
 				LeaMapsLC["IncreaseZoomMax"] = 2
 				LeaMapsLC["ZoomStep"] = LeaMapsZoom.ZOOMSTEP_DEFAULT
@@ -1395,10 +1361,8 @@
 				IncreaseZoomFrame:Hide(); IncreaseZoomFrame:Show()
 			end)
 
-			-- Show configuration panel when configuration button is clicked
 			LeaMapsCB["IncreaseZoomBtn"]:HookScript("OnClick", function()
 				if IsShiftKeyDown() and IsControlKeyDown() then
-					-- Preset profile
 					LeaMapsLC["IncreaseZoomMax"] = 2
 					SetZoomFunc()
 					if IncreaseZoomFrame:IsShown() then IncreaseZoomFrame:Hide(); IncreaseZoomFrame:Show(); end
@@ -1418,7 +1382,7 @@
 
 			local cTime = -1
 
-			-- Function to update map (scroll units are unscaled detail frame pixels, as in the zoom module)
+			-- Scroll units are unscaled detail frame pixels
 			local function cUpdate(self, elapsed)
 				if cTime > 2 or cTime == -1 then
 					if WorldMapScrollFrame.panning then return end
@@ -1437,10 +1401,8 @@
 				cTime = cTime + elapsed
 			end
 
-			-- Create frame for update
 			local cFrame = CreateFrame("FRAME", nil, WorldMapFrame)
 
-			-- Function to set update state
 			local function SetUpdateFunc()
 				cTime = -1
 				if LeaMapsLC["CenterMapOnPlayer"] == "On" then
@@ -1450,11 +1412,9 @@
 				end
 			end
 
-			-- Set update state when option is clicked and on startup
 			LeaMapsCB["CenterMapOnPlayer"]:HookScript("OnClick", SetUpdateFunc)
 			SetUpdateFunc()
 
-			-- Update location immediately or after a very short delay
 			local function SetCenterNow()
 				if LeaMapsLC["CenterMapOnPlayer"] == "On" then
 					if IsShiftKeyDown() then cTime = -2000 else cTime = -1 end
@@ -1920,7 +1880,6 @@
 
 			local function SetZoneMapStyle()
 				local zoneMapSetting = LeaMapsLC["ZoneMapMenu"]
-				-- String, matching what Blizzard reads back from the CVar at login
 				SetCVar("showBattlefieldMinimap", zoneMapSetting - 1)
 				_G.SHOW_BATTLEFIELD_MINIMAP = tostring(zoneMapSetting - 1)
 				-- 3.3.5a has no DoesInstanceTypeMatchBattlefieldMapSettings
@@ -1951,21 +1910,18 @@
 
 			if not BattlefieldMinimap then BattlefieldMinimap_LoadUI() end
 
-			-- Create configuraton panel
 			local battleFrame = LeaMapsLC:CreatePanel("Enhance battlefield map", "battleFrame")
 
-			-- Add controls
 			LeaMapsLC:MakeTx(battleFrame, "Settings", 16, -72)
 			LeaMapsLC:MakeCB(battleFrame, "UnlockBattlefield", "Unlock battlefield map", 16, -92, false, "If checked, you can move the battlefield map by dragging any of its borders.")
 			LeaMapsLC:MakeSL(battleFrame, "BattleGroupIconSize", "Group Icons", "Drag to set the group icon size.", 12, 48, 1, 206, -172, "%.0f")
 			LeaMapsLC:MakeSL(battleFrame, "BattleMapSize", "Map Size", "Drag to set the battlefield map size.", 150, 1200, 1, 36, -172, "%.0f")
 			LeaMapsLC:MakeSL(battleFrame, "BattleMapOpacity", "Map Opacity", "Drag to set the battlefield map opacity.", 0.1, 1, 0.1, 36, -232, "%.0f")
 
-			-- Hide battlefield tab button when it's shown and on startup
 			BattlefieldMinimapTab:Hide()
 			hooksecurefunc(BattlefieldMinimapTab, "Show", BattlefieldMinimapTab.Hide)
 
-			-- 3.3.5a hangs the map below its tab, so drag the tab (same as the ElvUI skin); right-click keeps the tab menu
+			-- 3.3.5a hangs the map below its tab, so move the tab
 			BattlefieldMinimap:EnableMouse(true)
 			BattlefieldMinimapTab:SetMovable(true)
 			BattlefieldMinimap:SetScript("OnMouseDown", function(self, btn)
@@ -1981,7 +1937,6 @@
 				end
 			end)
 
-			-- Toggle battlefield map frame with configuration panel
 			battleFrame:HookScript("OnShow", function()
 				LeaMapsLC.BFMapWasShown = BattlefieldMinimap:IsShown()
 				BattlefieldMinimap:Show()
@@ -2000,7 +1955,6 @@
 			LeaMapsCB["BattleMapSize"]:HookScript("OnValueChanged", SetMapSize)
 			SetMapSize()
 
-			-- Map opacity
 			local function DoMapOpacity()
 				LeaMapsCB["BattleMapOpacity"].f:SetFormattedText("%.0f%%", LeaMapsLC["BattleMapOpacity"] * 100)
 				BattlefieldMinimapOptions.opacity = 1 - LeaMapsLC["BattleMapOpacity"]
@@ -2009,7 +1963,6 @@
 			LeaMapsCB["BattleMapOpacity"]:HookScript("OnValueChanged", DoMapOpacity)
 			DoMapOpacity()
 
-			-- Group icons
 			local function SetIconSize()
 				local size = LeaMapsLC["BattleGroupIconSize"]
 				LeaMapsCB["BattleGroupIconSize"].f:SetText(size .. " (" .. string.format("%.0f%%", size / 12 * 100) .. ")")
@@ -2022,13 +1975,11 @@
 			LeaMapsCB["BattleGroupIconSize"]:HookScript("OnValueChanged", SetIconSize)
 			SetIconSize()
 
-			-- Back to Main Menu button click
 			battleFrame.b:HookScript("OnClick", function()
 				battleFrame:Hide()
 				LeaMapsLC["PageF"]:Show()
 			end)
 
-			-- Reset button click
 			battleFrame.r:HookScript("OnClick", function()
 				LeaMapsLC["UnlockBattlefield"] = "On"
 				LeaMapsLC["BattleGroupIconSize"] = 12
@@ -2040,10 +1991,8 @@
 				battleFrame:Hide(); battleFrame:Show()
 			end)
 
-			-- Show configuration panel when configuration button is clicked
 			LeaMapsCB["EnhanceBattleMapBtn"]:HookScript("OnClick", function()
 				if IsShiftKeyDown() and IsControlKeyDown() then
-					-- Preset profile
 					LeaMapsLC["UnlockBattlefield"] = "On"
 					LeaMapsLC["BattleGroupIconSize"] = 12
 					LeaMapsLC["BattleMapSize"] = 225
@@ -2085,7 +2034,7 @@
 
 			-- Handle frame (visible grip icon)
 			local scaleHandle = CreateFrame("Frame", nil, WorldMapFrame)
-			-- 20 like BCA, divided out of the windowed map scale (see LeaMapsLC:ApplyMapScale)
+			-- 20 like BCA at our map scale
 			scaleHandle:SetSize(20 * WORLDMAP_WINDOWED_SIZE, 20 * WORLDMAP_WINDOWED_SIZE)
 			scaleHandle:SetAlpha(0.5)
 			scaleHandle:SetPoint("BOTTOMRIGHT", WorldMapScrollFrame, "BOTTOMRIGHT", 0, 0)
@@ -2358,7 +2307,7 @@
 		DEFAULT_CHAT_FRAME:AddMessage(L[text] or text, 1.0, 0.85, 0.0)
 	end
 
-	-- Apply the map scale; 3.3.5a draws the windowed map at WORLDMAP_WINDOWED_SIZE, so divide that out to match upstream sizes
+	-- The windowed map is drawn at WORLDMAP_WINDOWED_SIZE, divide it out to match BCA
 	function LeaMapsLC:ApplyMapScale()
 		local scale = LeaMapsLC["MapScale"] / WORLDMAP_WINDOWED_SIZE
 		WorldMapFrame:SetScale(scale)
@@ -2998,7 +2947,7 @@
 			LeaMapsLC:LoadVarAnc("MapPosR", "CENTER")
 			LeaMapsLC:LoadVarNum("MapPosX", 0, -5000, 5000)
 			LeaMapsLC:LoadVarNum("MapPosY", 20, -5000, 5000)
-			-- Scale used to be stored relative to Blizzard's windowed map; convert it once
+			-- Convert scales saved before ApplyMapScale
 			if LeaMapsDB["MapScale"] and not LeaMapsDB["MapScaleUpstream"] then
 				LeaMapsDB["MapScale"] = LeaMapsDB["MapScale"] * WORLDMAP_WINDOWED_SIZE
 			end
@@ -3011,7 +2960,7 @@
 			LeaMapsLC:LoadVarChk("AutoChangeZones", "Off")
 			LeaMapsLC:LoadVarChk("UseDefaultMap", "Off")
 			LeaMapsLC:LoadVarChk("EnlargePlayerArrow", "On")
-			LeaMapsLC:LoadVarNum("PlayerArrowSize", 36, 16, 64)
+			LeaMapsLC:LoadVarNum("PlayerArrowSize", 27, 16, 64)
 			LeaMapsLC:LoadVarChk("UseClassIcons", "On")
 			LeaMapsLC:LoadVarNum("ClassIconSize", 20, 20, 80)
 			LeaMapsLC:LoadVarChk("RememberZoom", "On")
@@ -3041,7 +2990,7 @@
 			LeaMapsLC:LoadVarNum("BattleGroupIconSize", 12, 12, 48)
 			LeaMapsLC:LoadVarNum("BattleMapOpacity", 1, 0.1, 1)
 			LeaMapsLC:LoadVarChk("ShowMinimapIcon", "On")
-			LeaMapsLC:LoadVarChk("RevealMaps", "Off")
+			LeaMapsLC:LoadVarChk("RevealMaps", "On")
 			LeaMapsLC:LoadVarChk("RevTint", "On")
 			LeaMapsLC:LoadVarNum("tintRed", 0.6, 0, 1)
 			LeaMapsLC:LoadVarNum("tintGreen", 0.6, 0, 1)
@@ -3208,7 +3157,7 @@
 	CloseB:SetSize(30, 30)
 	CloseB:SetPoint("TOPRIGHT", 0, 0)
 
-	-- Add content (layout matches Leatrix Maps for Burning Crusade Anniversary)
+	-- Layout as in BCA
 	LeaMapsLC:MakeTx(PageF, "Appearance", 16, -72)
 	LeaMapsLC:MakeCB(PageF, "ShowZoneMenu", "Show zone menus", 16, -92, true, "If checked, zone and continent dropdown menus will be shown in the map frame.")
 	LeaMapsLC:MakeCB(PageF, "SetMapOpacity", "Set map opacity", 16, -112, true, "If checked, you will be able to set the opacity of the map.")
@@ -3233,7 +3182,7 @@
 	LeaMapsLC:MakeCB(PageF, "ShowZoneLevels", "Show zone levels", 225, -232, false, "If checked, zone, dungeon and fishing skill levels will be shown.")
 	LeaMapsLC:MakeCB(PageF, "ShowCoords", "Show coordinates", 225, -252, false, "If checked, coordinates will be shown.")
 	LeaMapsLC:MakeCB(PageF, "HideTownCityIcons", "Hide town and city icons", 225, -272, true, "If checked, town and city icons will not be shown on the continent maps.")
-	-- 3.3.5a only: the quest objectives toggle has no other home on the custom map
+	-- 3.3.5a only
 	LeaMapsLC:MakeCB(PageF, "ShowObjectives", "Show objectives", 225, -292, false, "If checked, quest objectives will be shown.")
 
 	LeaMapsLC:MakeTx(PageF, "More", 225, -332)

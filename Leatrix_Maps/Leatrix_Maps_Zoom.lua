@@ -13,7 +13,7 @@
 
 	LeaMapsZoom.MIN_ZOOM = 1.0
 
-	-- Frame scale limits matching the 0.2-3.0 map scale slider (see LeaMapsLC:ApplyMapScale)
+	-- 0.2-3.0 map scale (see LeaMapsLC:ApplyMapScale)
 	LeaMapsZoom.MINIMODE_MIN_ZOOM = 0.2 / WORLDMAP_WINDOWED_SIZE
 	LeaMapsZoom.MINIMODE_MAX_ZOOM = 3.0 / WORLDMAP_WINDOWED_SIZE
 	LeaMapsZoom.MINIMODE_ZOOM_STEP = 0.1
@@ -23,7 +23,7 @@
 	LeaMapsZoom.worldmapPoiMaxX = nil
 	LeaMapsZoom.worldmapPoiMaxY = nil
 
-	LeaMapsZoom.PLAYER_ARROW_SIZE = 36
+	LeaMapsZoom.PLAYER_ARROW_SIZE = 16
 	LeaMapsZoom.GROUP_ICON_SIZE = 20
 
 	LeaMapsZoom.ENABLEPERSISTZOOM_DEFAULT  = false
@@ -613,10 +613,10 @@
 			ShowWorldMapArrowFrame(nil)
 			WorldMapPlayer:SetAllPoints(PlayerArrowFrame)
 			WorldMapPlayer.Icon:SetRotation(PlayerArrowFrame:GetFacing())
+			-- Divide out the windowed map shrink to match BCA sizes
 			local _, mapsterArrowScale = LeaMapsZoom.GetMapster("arrowScale")
-			WorldMapPlayer.Icon:SetSize(
-				LeaMapsZoom.PLAYER_ARROW_SIZE * (mapsterArrowScale or 1),
-				LeaMapsZoom.PLAYER_ARROW_SIZE * (mapsterArrowScale or 1))
+			local arrowSize = LeaMapsZoom.PLAYER_ARROW_SIZE * (mapsterArrowScale or 1) / WORLDMAP_SETTINGS.size
+			WorldMapPlayer.Icon:SetSize(arrowSize, arrowSize)
 			WorldMapPlayer:Show()
 		end
 
@@ -776,6 +776,8 @@
 	function LeaMapsZoom.ColorWorldMapPartyMemberFrame(partyMemberFrame, unit)
 		local classColor = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
 		if classColor and not MagnifyOptions.enableOldPartyIcons then
+			local size = LeaMapsZoom.GROUP_ICON_SIZE / WORLDMAP_SETTINGS.size
+			partyMemberFrame.colorIcon:SetSize(size, size)
 			partyMemberFrame.colorIcon:Show()
 			partyMemberFrame.icon:Hide()
 			partyMemberFrame.colorIcon:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
@@ -787,11 +789,6 @@
 
 	function LeaMapsZoom.SetGroupIconSize(size)
 		LeaMapsZoom.GROUP_ICON_SIZE = size
-		for i = 1, MAX_RAID_MEMBERS do
-			local party, raid = _G["WorldMapParty" .. i], _G["WorldMapRaid" .. i]
-			if party and party.colorIcon then party.colorIcon:SetSize(size, size) end
-			if raid and raid.colorIcon then raid.colorIcon:SetSize(size, size) end
-		end
 	end
 
 	function LeaMapsZoom.CreateClassColorIcon(partyMemberFrame)
