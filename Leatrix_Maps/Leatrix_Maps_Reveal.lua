@@ -18,8 +18,7 @@
 	local strmatch, strfind = string.match, string.find
 	local tinsert = table.insert
 
-	-- Errata table: zone map filename → { SUBZONENAME = encodedTexID, ... }
-	-- Adapted from Mapster FogClear. The encoded texID packs width/height/offsetX/offsetY.
+	-- Errata: zone map file -> { SUBZONENAME = encodedTexID } (from Mapster FogClear)
 	local errata = {
 		["LochModan"] = {
 			["VALLEYOFKINGS"] = 397399025859,
@@ -1031,8 +1030,7 @@
 		},
 	}
 
-	-- No AceDB: add metatable so unknown zone keys return {} instead of nil.
-	-- This matches Mapster's AceDB ['*']={} wildcard behaviour.
+	-- Unknown zone keys return {} (like Mapster's AceDB wildcard)
 	setmetatable(errata, {
 		__index = function(t, k)
 			local v = {}
@@ -1041,18 +1039,13 @@
 		end
 	})
 
-	-- Overlay textures currently drawn for areas the player has not discovered.
-	-- Rebuilt on every render so the tint controls can recolour what is already
-	-- on screen without forcing a map redraw.
+	-- Undiscovered overlay textures, so tint changes apply without a redraw
 	local unexploredTextures = {}
 
-	-- True while overlay textures carry a tint.  Blizzard never touches vertex
-	-- colour itself, so tinted textures have to be cleared before it reuses them.
+	-- True while overlays are tinted; must be cleared before Blizzard reuses them
 	local tintApplied = false
 
-	-- The original GetNumMapOverlays, stored by LeaMapsFC.Setup.  Our own hook
-	-- reports zero while reveal is on, so the original is the only way to find
-	-- out which sub-zones the player has actually discovered.
+	-- Original GetNumMapOverlays (the hook returns 0 while reveal is on)
 	local origGetNumMapOverlays
 
 	-- Colour for undiscovered areas (white when tinting is off)
@@ -1064,8 +1057,7 @@
 		return 1, 1, 1, 1
 	end
 
-	-- Recolour the undiscovered overlays that are already on screen so dragging
-	-- a tint slider updates the map immediately.
+	-- Recolour the undiscovered overlays on screen
 	function LeaMapsFC.ApplyTint()
 		local r, g, b, a = getTintColor()
 		for i = 1, #unexploredTextures do
@@ -1075,8 +1067,7 @@
 		tintApplied = LeaMapsLC and LeaMapsLC["RevTint"] == "On" and #unexploredTextures > 0 or false
 	end
 
-	-- Restore every overlay texture to plain white.  Used when reveal is
-	-- switched off, otherwise Blizzard would redraw discovered areas tinted.
+	-- Reset overlay tint when reveal is switched off
 	function LeaMapsFC.ResetOverlayColors()
 		for i = 1, NUM_WORLDMAP_OVERLAYS do
 			local ov = _G["WorldMapOverlay"..i]
@@ -1089,9 +1080,7 @@
 		tintApplied = false
 	end
 
-	-- Sub-zones the player has discovered, keyed by lower case texture name with
-	-- the path stripped so it matches the errata keys whichever form the client
-	-- reports.  Values keep the overlay geometry for zones missing from errata.
+	-- Discovered sub-zones, keyed by lower case texture name without path
 	local function getDiscoveredOverlays(pathPrefix)
 		local discovered = {}
 		if not origGetNumMapOverlays then return discovered end
@@ -1115,13 +1104,7 @@
 		return discovered
 	end
 
-	-- Renders all sub-zone overlays for the current zone using the named
-	-- WorldMapOverlay%d frames — the same frames Blizzard uses.  If the errata
-	-- data needs more frames than currently exist, new ones are created and
-	-- NUM_WORLDMAP_OVERLAYS is updated so Blizzard's own hide-loop covers them.
-	-- (This mirrors Mapster FogClear's updateOverlayTextures, with the addition
-	-- of MozzFullWorldMap's discovered/undiscovered split so the two can be
-	-- coloured differently.)
+	-- Render all sub-zone overlays in Blizzard's WorldMapOverlay%d frames, creating more if needed (from Mapster FogClear)
 	local function updateOverlayTextures()
 		if not WorldMapFrame:IsShown() then return end
 
@@ -1134,12 +1117,7 @@
 		local discovered = getDiscoveredOverlays(pathPrefix)
 		local overlayMap = errata[mapFileName]
 
-		-- Build the render list from the errata data, flagging each sub-zone as
-		-- explored or not.  Entries are removed from the discovered table as
-		-- they are matched by name, and the rest are matched by tile geometry
-		-- below (the same identity the Burning Crusade Classic version uses),
-		-- so a sub-zone the client happens to name differently is still
-		-- recognised as explored instead of being drawn twice.
+		-- Flag each sub-zone as explored; unmatched names fall back to tile geometry
 		local renderList = {}
 		local byGeometry = {}
 		for texName, texID in pairs(overlayMap) do

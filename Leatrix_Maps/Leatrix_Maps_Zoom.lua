@@ -13,8 +13,9 @@
 
 	LeaMapsZoom.MIN_ZOOM = 1.0
 
-	LeaMapsZoom.MINIMODE_MIN_ZOOM = 1.0
-	LeaMapsZoom.MINIMODE_MAX_ZOOM = 3.0
+	-- Frame scale limits matching the 0.2-3.0 map scale slider (see LeaMapsLC:ApplyMapScale)
+	LeaMapsZoom.MINIMODE_MIN_ZOOM = 0.2 / WORLDMAP_WINDOWED_SIZE
+	LeaMapsZoom.MINIMODE_MAX_ZOOM = 3.0 / WORLDMAP_WINDOWED_SIZE
 	LeaMapsZoom.MINIMODE_ZOOM_STEP = 0.1
 
 	LeaMapsZoom.WORLDMAP_POI_MIN_X = 12
@@ -23,6 +24,7 @@
 	LeaMapsZoom.worldmapPoiMaxY = nil
 
 	LeaMapsZoom.PLAYER_ARROW_SIZE = 36
+	LeaMapsZoom.GROUP_ICON_SIZE = 20
 
 	LeaMapsZoom.ENABLEPERSISTZOOM_DEFAULT  = false
 	LeaMapsZoom.ENABLEOLDPARTYICONS_DEFAULT = false
@@ -59,6 +61,24 @@
 		local currentPoint, _f, currentRelativePoint, currentOffsetX, currentOffsetY = frame:GetPoint()
 		frame:ClearAllPoints()
 		frame:SetPoint(currentPoint, newRelativeFrame, currentRelativePoint, currentOffsetX, currentOffsetY)
+	end
+
+	-- Move Questie's map button onto the non-zooming scroll frame, keeping Questie's corner, offset and level
+	local QUESTIE_BUTTON_SHIFT_LEFT = 24
+
+	local function pinQuestieWorldMapButton(button)
+		local point, relativeFrame, relativePoint, offsetX, offsetY = button:GetPoint(1)
+		if not point or relativeFrame == WorldMapScrollFrame then return end
+		if point:find("RIGHT") then
+			offsetX = offsetX - QUESTIE_BUTTON_SHIFT_LEFT
+		end
+		local frameLevel = button:GetFrameLevel()
+		if button:GetParent() ~= WorldMapScrollFrame then
+			button:SetParent(WorldMapScrollFrame)
+		end
+		button:ClearAllPoints()
+		button:SetPoint(point, WorldMapScrollFrame, relativePoint, offsetX, offsetY)
+		button:SetFrameLevel(frameLevel)
 	end
 
 	local function resizePOI(poiButton)
@@ -231,14 +251,11 @@
 	-- Questie pin management
 	----------------------------------------------------------------------
 
-	-- Disabled: Questie pins are now managed by Questie itself
+	-- Questie manages its own pins
 	function LeaMapsZoom.SetQuestieWorldMapPinsVisible(isVisible)
-		-- Intentionally empty: Questie manages its own pins
 	end
 
-	-- Disabled: Questie pins are now managed by Questie itself
 	function LeaMapsZoom.SyncQuestieWorldMapPins(forceRescan)
-		-- Intentionally empty: Questie manages its own pins, we don't touch them
 	end
 
 	----------------------------------------------------------------------
@@ -261,8 +278,7 @@
 	end
 
 	function LeaMapsZoom.ResizeQuestPOIs()
-		-- Bounds are set by SetPOIMaxBounds (called from SetDetailFrameScale).
-		-- If the map hasn't been set up yet the first time, skip to avoid nil compare.
+		-- Bounds are not set until SetDetailFrameScale has run
 		if not LeaMapsZoom.worldmapPoiMaxY then return end
 		local QUEST_POI_MAX_TYPES  = 4
 		local POI_TYPE_MAX_BUTTONS = 25
@@ -430,6 +446,16 @@
 		WorldMapBlobFrame:SetAllPoints(WorldMapDetailFrame)
 
 		WorldMapPlayer:SetParent(WorldMapDetailFrame)
+
+		-- Questie parents its map button to WorldMapButton, which now zooms; re-pin after every Questie layout pass
+		local questieButton = Questie_WorldMapButton
+		if questieButton then
+			if not questieButton.leaMapsPinHooked then
+				questieButton.leaMapsPinHooked = true
+				hooksecurefunc(questieButton, "SetScale", pinQuestieWorldMapButton)
+			end
+			pinQuestieWorldMapButton(questieButton)
+		end
 
 		updatePointRelativeTo(WorldMapQuestScrollFrame,       WorldMapScrollFrame)
 		updatePointRelativeTo(WorldMapQuestDetailScrollFrame, WorldMapScrollFrame)
@@ -759,12 +785,21 @@
 		end
 	end
 
+	function LeaMapsZoom.SetGroupIconSize(size)
+		LeaMapsZoom.GROUP_ICON_SIZE = size
+		for i = 1, MAX_RAID_MEMBERS do
+			local party, raid = _G["WorldMapParty" .. i], _G["WorldMapRaid" .. i]
+			if party and party.colorIcon then party.colorIcon:SetSize(size, size) end
+			if raid and raid.colorIcon then raid.colorIcon:SetSize(size, size) end
+		end
+	end
+
 	function LeaMapsZoom.CreateClassColorIcon(partyMemberFrame)
 		if partyMemberFrame then
 			partyMemberFrame.colorIcon = partyMemberFrame:CreateTexture(nil, "ARTWORK")
-			partyMemberFrame.colorIcon:SetAllPoints(partyMemberFrame)
-			partyMemberFrame.colorIcon:SetTexture(
-				"Interface\\AddOns\\" .. ADDON_NAME .. "\\textures\\WorldMapPlayer")
+			partyMemberFrame.colorIcon:SetSize(LeaMapsZoom.GROUP_ICON_SIZE, LeaMapsZoom.GROUP_ICON_SIZE)
+			partyMemberFrame.colorIcon:SetPoint("CENTER")
+			partyMemberFrame.colorIcon:SetTexture("Interface\\AddOns\\" .. ADDON_NAME .. "\\Leatrix_Maps_Icon")
 			partyMemberFrame.icon:Hide()
 		end
 	end
