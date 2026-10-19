@@ -24,7 +24,6 @@ backported from Leatrix Maps for The Burning Crusade Classic Anniversary
 ### Map Controls
 - **Unlock map frame** — drag any border to reposition the map anywhere on screen
 - **Auto change zones** — map follows your character as you move between zones
-- **Sticky map frame** — map stays open until you manually close it
 - Reset map layout button to restore default position
 
 ### Elements
@@ -33,7 +32,7 @@ backported from Leatrix Maps for The Burning Crusade Classic Anniversary
 - Player and cursor coordinates displayed on the map
 - Quest objectives overlay
 
-### Zoom & Pan
+### Zoom
 - Scroll-wheel zoom with configurable maximum zoom level and zoom speed
 - Click-and-drag panning across the map
 - Optional persist zoom per zone — remembers your zoom level when reopening
@@ -43,8 +42,6 @@ backported from Leatrix Maps for The Burning Crusade Classic Anniversary
 ### More
 - **Show unexplored areas** — removes fog of war from all zone maps
 - Zone map (battlefield minimap) visibility control — Never / Battlegrounds / Always
-- ElvUI compatibility — backdrop suppression, dropdown skinning, mouse re-enable,
-  and option locking when ElvUI's own worldmap module is active
 
 ---
 
@@ -69,4 +66,4 @@ backported from Leatrix Maps for The Burning Crusade Classic Anniversary
 - **Leatrix** — original addon author
 - Zoom adapted from [Magnify-WotLK](https://github.com/rissole/Magnify-WotLK)
 - Map reveal adapted from Mapster 3.3.5: https://www.curseforge.com/wow/addons/mapster/files/436697
-- claude OPUS 5.5.
+- Made with help from Claude Opus 5.5.
