@@ -61,8 +61,10 @@
 		["Ironforge"]            = 342,
 		["Isle of Quel'Danas"]   = 500,
 		["Loch Modan"]           = 36,
+		["Plaguelands: The Scarlet Enclave"] = 503,
 		["Redridge Mountains"]   = 37,
 		["Searing Gorge"]        = 29,
+		["Silvermoon City"]      = 481,
 		["Silverpine Forest"]    = 22,
 		["Stormwind City"]       = 302,
 		["Stranglethorn Vale"]   = 38,
@@ -93,6 +95,7 @@
 		["Tanaris"]              = 162,
 		["Teldrassil"]           = 42,
 		["The Barrens"]          = 12,
+		["The Exodar"]           = 472,
 		["Thousand Needles"]     = 62,
 		["Thunder Bluff"]        = 363,
 		["Un'Goro Crater"]       = 202,
@@ -113,6 +116,7 @@
 		["Dragonblight"]         = 489,
 		["Grizzly Hills"]        = 491,
 		["Howling Fjord"]        = 492,
+		["Hrothgar's Landing"]   = 542,
 		["Icecrown"]             = 493,
 		["Sholazar Basin"]       = 494,
 		["The Storm Peaks"]      = 496,
@@ -187,7 +191,7 @@
 			for zi, zoneName in ipairs({GetMapZones(cont)}) do
 				SetMapZoom(cont, zi)
 				local mapID = GetCurrentMapAreaID()
-				mapIDToCZ[mapID] = {cont, zi}
+				mapIDToCZ[mapID] = {cont, zi, zoneName}
 				localToEnglish[zoneName] = mapIDToEnglish[mapID]
 			end
 		end
@@ -2762,8 +2766,15 @@
 					local name = GetMapInfo() or "?"
 					LeaMapsLC:Print("Map: " .. name .. " (cont=" .. tostring(cont) .. " zone=" .. tostring(zone) .. ")")
 				else
-					-- Try to navigate by zone name
+					-- Try to navigate by zone name (the client's own names first, then English)
 					local target = arg1
+					for mid, cz in pairs(mapIDToCZ) do
+						if cz[3] and cz[3]:lower():find(target, 1, true) then
+							NavigateToMapID(mid)
+							LeaMapsLC:Print("Navigating to: " .. cz[3])
+							return
+						end
+					end
 					for name, mid in pairs(zoneNameToMapID) do
 						if name:lower():find(target, 1, true) then
 							NavigateToMapID(mid)
